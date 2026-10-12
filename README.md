@@ -9,7 +9,7 @@ python3 src/build.py              # writes site/
 cd site && python3 -m http.server 8787
 ```
 
-Open http://localhost:8787. The build needs no dependencies. Deploy by uploading `launchleadgen/site/` to any static host (Netlify, Vercel, Cloudflare Pages or S3). Links are root-relative, so serve the site at the domain root.
+Open http://localhost:8787. The build needs no dependencies. Deploy by uploading `site/` to any static host (Netlify, Vercel, Cloudflare Pages or S3). Links are root-relative, so serve the site at the domain root.
 
 ## Structure
 
