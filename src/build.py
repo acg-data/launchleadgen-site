@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Static site builder for Launch Lead Gen.
 
-Usage: python3 launchleadgen/src/build.py
-Writes the finished site to launchleadgen/site/. No third-party dependencies.
+Usage: python3 src/build.py
+Writes the finished site to site/. No third-party dependencies.
 """
 import html
 import json

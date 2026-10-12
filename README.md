@@ -1,12 +1,12 @@
 # Launch Lead Gen: drainage & irrigation site
 
-A standalone static marketing site for launchleadgen.io. It focuses on exclusive leads for drainage and irrigation contractors. It is separate from the Aryo / Ari preview in this repo.
+A standalone static marketing site for launchleadgen.io. It focuses on exclusive leads for drainage and irrigation contractors. It was split out of the aryosmallbiz repo.
 
 ## Build & preview
 
 ```sh
-python3 launchleadgen/src/build.py              # writes launchleadgen/site/
-cd launchleadgen/site && python3 -m http.server 8787
+python3 src/build.py              # writes site/
+cd site && python3 -m http.server 8787
 ```
 
 Open http://localhost:8787. The build needs no dependencies. Deploy by uploading `launchleadgen/site/` to any static host (Netlify, Vercel, Cloudflare Pages or S3). Links are root-relative, so serve the site at the domain root.
