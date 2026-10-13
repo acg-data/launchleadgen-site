@@ -3,7 +3,6 @@
   "use strict";
   var doc = document.documentElement;
   doc.classList.remove("no-js");
-  var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /* Mobile menu */
   var toggle = document.querySelector(".menu-toggle");
@@ -18,6 +17,14 @@
         toggle.setAttribute("aria-expanded", "false");
       });
     });
+  }
+
+  /* Header shadow once the page scrolls */
+  var siteHeader = document.querySelector(".site-header");
+  if (siteHeader) {
+    var onScroll = function () { siteHeader.classList.toggle("scrolled", window.scrollY > 8); };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
   }
 
   /* Reveal on scroll */
@@ -35,55 +42,11 @@
 
   /* Mobile sticky CTA appears after the hero */
   var mobileCta = document.querySelector(".mobile-cta");
-  var hero = document.querySelector(".hero");
+  var hero = document.querySelector(".hero, .page-hero");
   if (mobileCta && hero) {
     window.addEventListener("scroll", function () {
       mobileCta.classList.toggle("show", window.scrollY > hero.offsetHeight - 80);
     }, { passive: true });
-  }
-
-  /* Sample lead feed (hero). Clearly labelled as sample data in the markup. */
-  var feed = document.querySelector("[data-feed]");
-  if (feed) {
-    var icons = {
-      drain: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11z"/></svg>',
-      irr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-7"/><path d="M8 15h8"/><path d="M12 11c-3-3-7-3-9-2"/><path d="M12 11c3-3 7-3 9-2"/><path d="M12 11V7"/><path d="M9 4c1.5-1 4.5-1 6 0"/></svg>'
-    };
-    var samples = [
-      ["drain", "French drain — backyard pooling", "Franklin, TN · 140 ft · Wants quote this week", "Verified"],
-      ["irr", "New sprinkler system — 6 zones", "Frisco, TX · New build · Owner occupied", "Exclusive"],
-      ["drain", "Downspouts + regrading", "Marietta, GA · Water at foundation", "Verified"],
-      ["irr", "Irrigation repair — broken heads", "Chandler, AZ · Leak + low pressure", "Exclusive"],
-      ["drain", "Sump pump + interior drain", "Carmel, IN · Wet basement after storms", "Verified"],
-      ["irr", "Drip conversion + smart controller", "Boise, ID · Water restrictions", "Exclusive"],
-      ["drain", "Channel drain on driveway", "Raleigh, NC · Garage flooding", "Verified"],
-      ["irr", "Spring start-up + backflow test", "Lehi, UT · Annual service", "Exclusive"]
-    ];
-    var i = 0;
-    var make = function (s, isNew) {
-      var el = document.createElement("div");
-      el.className = "lead-card" + (isNew ? " is-new" : "");
-      var icon = document.createElement("div");
-      icon.className = "lead-icon " + s[0];
-      icon.innerHTML = icons[s[0]];
-      var body = document.createElement("div");
-      var t = document.createElement("div"); t.className = "lead-title"; t.textContent = s[1];
-      var m = document.createElement("div"); m.className = "lead-meta"; m.textContent = s[2];
-      body.appendChild(t); body.appendChild(m);
-      var b = document.createElement("span"); b.className = "lead-badge"; b.textContent = s[3];
-      el.appendChild(icon); el.appendChild(body); el.appendChild(b);
-      return el;
-    };
-    for (; i < 4; i++) feed.appendChild(make(samples[i], false));
-    if (!reduceMotion) {
-      setInterval(function () {
-        var prev = feed.querySelector(".is-new");
-        if (prev) prev.classList.remove("is-new");
-        feed.insertBefore(make(samples[i % samples.length], true), feed.firstChild);
-        i++;
-        while (feed.children.length > 4) feed.removeChild(feed.lastChild);
-      }, 3200);
-    }
   }
 
   /* ROI calculator */
@@ -244,9 +207,6 @@
         var mode = b.getAttribute("data-mode");
         document.querySelectorAll("[data-price]").forEach(function (el) {
           el.textContent = el.getAttribute("data-" + mode);
-        });
-        document.querySelectorAll("[data-price-note]").forEach(function (el) {
-          el.textContent = el.getAttribute("data-note-" + mode);
         });
       });
     });
