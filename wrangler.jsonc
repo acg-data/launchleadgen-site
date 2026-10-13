@@ -1,0 +1,18 @@
+// Cloudflare Worker + static assets for launchleadgen.io.
+// Build first: python3 src/build.py (writes ./site). Deployed by
+// .github/workflows/deploy.yml on every push to main.
+{
+  "name": "launchleadgen-site-preview",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./site",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    // Only the form endpoint runs Worker code; everything else is a static file.
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": { "enabled": true }
+}

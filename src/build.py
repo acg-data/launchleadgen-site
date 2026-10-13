@@ -15,9 +15,12 @@ SRC = Path(__file__).resolve().parent
 OUT = SRC.parent / "site"
 DOMAIN = "https://launchleadgen.io"
 BRAND = "Launch Lead Gen"
-EMAIL = "hello@launchleadgen.io"
+EMAIL = "info@launchleadgen.com"
+PHONE = "(210) 441-6650"
+PHONE_HREF = "tel:+12104416650"
 YEAR = date.today().year
 OG_IMAGE = f"{DOMAIN}/assets/og.jpg"
+LEGAL_UPDATED = "October 13, 2026"  # change when the policy text changes
 
 # ---------------------------------------------------------------- icons (24px line set)
 ICONS = {
@@ -103,6 +106,7 @@ def header(active):
     {logo()}
     <ul class="nav-links" id="nav-links">{links}</ul>
     <div class="nav-cta">
+      <a class="nav-phone" href="{PHONE_HREF}">{icon("phone")}<span>{PHONE}</span></a>
       <a class="btn btn-primary" href="/contact.html">Talk to Launch {icon("arrow")}</a>
       <button class="menu-toggle" aria-label="Menu" aria-expanded="false" aria-controls="nav-links"><span></span><span></span><span></span></button>
     </div>
@@ -116,10 +120,10 @@ FOOTER = f"""<footer class="site-footer">
       <div>
         {logo(inverse=True)}
         <p class="footer-tag">More drainage jobs.<span>Less chasing leads.</span></p>
-        <p style="max-width:340px">Exclusive lead generation for drainage and irrigation contractors.</p>
+        <p style="max-width:340px">Exclusive drainage and irrigation leads for contractors.</p>
         <form class="footer-news" data-news>
           <label class="sr-only" for="news-email">Email</label>
-          <input id="news-email" type="email" placeholder="Monthly contractor playbook" required>
+          <input id="news-email" type="email" placeholder="Email for monthly guides" required>
           <button class="btn btn-primary" type="submit">Join</button>
         </form>
       </div>
@@ -139,15 +143,16 @@ FOOTER = f"""<footer class="site-footer">
           <li><a href="/how-it-works.html">How it works</a></li>
           <li><a href="/how-it-works.html#quality">Lead quality</a></li>
           <li><a href="/contact.html">Talk to Launch</a></li>
+          <li><a href="{PHONE_HREF}">{PHONE}</a></li>
           <li><a href="mailto:{EMAIL}">{EMAIL}</a></li>
         </ul>
       </div>
       <div>
-        <h4>Playbook</h4>
+        <h4>Guides</h4>
         <ul>
           <li><a href="/blog/">All articles</a></li>
           <li><a href="/blog/price-french-drain-jobs.html">Pricing drainage jobs</a></li>
-          <li><a href="/blog/qualify-drainage-leads.html">The first-call playbook</a></li>
+          <li><a href="/blog/qualify-drainage-leads.html">Qualifying drainage leads</a></li>
           <li><a href="/blog/exclusive-vs-shared-leads.html">Exclusive vs. shared leads</a></li>
         </ul>
       </div>
@@ -158,10 +163,17 @@ FOOTER = f"""<footer class="site-footer">
     </div>
   </div>
 </footer>
-<div class="mobile-cta"><a class="btn btn-primary" href="/contact.html">Talk to Launch {icon("arrow")}</a></div>"""
+<div class="mobile-cta"><a class="btn btn-navy" href="{PHONE_HREF}">{icon("phone")} Call</a><a class="btn btn-primary" href="/contact.html">Check my area {icon("arrow")}</a></div>"""
 
 
 PAGES = []
+
+
+def clean_url(path):
+    """site/ file path -> public URL (index.html -> /, pricing.html -> /pricing)."""
+    if path.endswith("index.html"):
+        return "/" + path[: -len("index.html")]
+    return "/" + path[: -len(".html")]
 
 
 def tighten_periods(m):
@@ -171,7 +183,7 @@ def tighten_periods(m):
 
 
 def page(path, title, desc, body, active="", schema=None, noindex=False):
-    canonical = DOMAIN + ("/" if path == "index.html" else "/" + path.replace("index.html", ""))
+    canonical = DOMAIN + clean_url(path)
     ld = f'<script type="application/ld+json">{json.dumps(schema)}</script>' if schema else ""
     robots = '<meta name="robots" content="noindex">' if noindex else ""
     doc = f"""<!doctype html>
@@ -209,6 +221,8 @@ def page(path, title, desc, body, active="", schema=None, noindex=False):
 </html>
 """
     doc = re.sub(r"(<h[12][^>]*>)(.*?)(</h[12]>)", tighten_periods, doc, flags=re.S)
+    # Cloudflare serves /pricing for pricing.html, so link to clean URLs directly.
+    doc = re.sub(r'((?:href|action)=")(/[^"#?]*?)\.html', r"\1\2", doc)
     target = OUT / path
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(doc, encoding="utf-8")
@@ -230,19 +244,20 @@ def faq_schema(items):
         for q, a in items]}
 
 
-def cta_band(title='Your ZIP codes might <span class="accent">still be open.</span>',
-             text="We cap how many contractors we work with in each market, so the leads you get are yours alone. Check your territory in ten seconds."):
+def cta_band(title='Check if your area <span class="accent">is open.</span>',
+             text="We work with a limited number of contractors in each market. Enter your main ZIP code and we'll confirm availability and pricing within one business day."):
     return f"""<section class="section"><div class="wrap">
   <div class="cta on-navy reveal">
     {lines()}
     <div style="position:relative">
-      {eyebrow("→", "Limited territories")}
+      {eyebrow("→", "Territory check")}
       <h2>{title}</h2>
       <p>{text}</p>
-      <ul class="check-row"><li>{icon("check")}Month to month</li><li>{icon("check")}Bad-lead credits</li><li>{icon("check")}Live in about a week</li></ul>
+      <ul class="check-row"><li>{icon("check")}No setup fee</li><li>{icon("check")}Month to month</li><li>{icon("check")}Bad leads credited</li></ul>
+      <p style="margin-top:22px">Rather talk? Call <a style="color:#fff;font-weight:700" href="{PHONE_HREF}">{PHONE}</a></p>
     </div>
     <form class="territory" data-territory novalidate>
-      <h3>Check territory availability</h3>
+      <h3>Is my area open?</h3>
       <div class="field"><label for="t-zip">Your main ZIP code</label><input id="t-zip" name="zip" inputmode="numeric" maxlength="5" placeholder="e.g. 37064" autocomplete="postal-code"><span class="err"></span></div>
       <div class="field"><label for="t-svc">Lead type</label><select id="t-svc" name="service"><option value="drainage">Drainage</option><option value="irrigation">Irrigation</option><option value="both">Drainage + irrigation</option></select></div>
       <button class="btn btn-primary btn-block" type="submit">Check availability {icon("arrow")}</button>
@@ -342,10 +357,10 @@ def compare_table():
 
 
 STEPS = [
-    ("Pick your turf", "Choose the ZIP codes, job types and weekly volume you want. French drains but no sump pumps? Done."),
-    ("We run local campaigns", "Search, social and landing pages written for homeowners with soggy yards and broken sprinklers, in your area only."),
-    ("Every request is screened", "Phone verified, address matched to your territory, and the problem, timeline and photos captured."),
-    ("Your phone rings", "The lead hits your phone, inbox and CRM within a minute, so you call while they're still thinking about it."),
+    ("Choose your area", "Pick your ZIP codes, the job types you want and a weekly lead cap."),
+    ("We run local ads", "Search and social campaigns reach homeowners in your area who need drainage or irrigation work."),
+    ("We screen each request", "We verify the phone number, confirm the address is in your area, and record the problem and timeline."),
+    ("You get the lead", "It arrives by text, email and CRM within a minute, so you can call while the homeowner is still available."),
 ]
 
 
@@ -359,9 +374,9 @@ def banner():
     return f"""<div class="banner on-navy reveal">
   <div class="banner-copy">
     {lines()}
-    {eyebrow("→", "Built for contractors")}
+    {eyebrow("→", "Talk to Launch")}
     <h2>Great at drainage? <span class="accent">Let's get you more calls.</span></h2>
-    <p>You've got the crew, the equipment and the reputation. We bring the homeowners who need you, and nobody else gets the call.</p>
+    <p>Tell us where you work and which jobs you want. We'll confirm your area is open and send pricing within one business day.</p>
     <div><a class="btn btn-primary btn-lg" href="/contact.html">Talk to Launch {icon("arrow")}</a></div>
   </div>
   <div class="banner-photo"><img src="/assets/img/foreman.jpg" alt="Drainage contractor in a Launch Lead Gen cap on a job site" width="412" height="816"></div>
@@ -371,10 +386,10 @@ def banner():
 # ---------------------------------------------------------------- posts
 COVER_TITLES = {
     "price-french-drain-jobs": "Pricing French drain jobs",
-    "qualify-drainage-leads": "The first-call playbook",
-    "drainage-demand-calendar": "The drainage demand calendar",
-    "irrigation-recurring-revenue": "One install. Ten years of revenue.",
-    "smart-controller-upsell": "Selling water-saving upgrades",
+    "qualify-drainage-leads": "Qualifying drainage leads",
+    "drainage-demand-calendar": "Drainage demand by month",
+    "irrigation-recurring-revenue": "Recurring irrigation revenue",
+    "smart-controller-upsell": "Smart controllers and drip",
     "exclusive-vs-shared-leads": "Exclusive vs. shared leads",
 }
 VARIANTS = ["v-navy", "v-blue", "v-ice"]
@@ -423,9 +438,9 @@ def build_home(posts):
     home_faq = [
         ("Are the leads really exclusive?", "Yes. Each homeowner request goes to one contractor in that territory. We don't resell it, split it or post it to a marketplace."),
         ("What counts as a drainage or irrigation lead?", "A homeowner in your ZIP codes asking for help with a specific job: French drains, regrading, downspouts, sump pumps, dry wells, sprinkler installs, repairs, drip conversions, controllers, start-ups and winterizations. You pick which job types you want."),
-        ("How fast do leads arrive?", "Leads are pushed by text and email the moment the homeowner finishes the request, and can post straight into most CRMs. Calling in the first few minutes makes a real difference to booking rates, so we build for speed."),
+        ("How fast do leads arrive?", "By text and email as soon as the homeowner submits the request, and in your CRM if you connect one. The sooner you call, the more likely you are to book the visit."),
         ("What if a lead is bad?", "Wrong numbers, duplicates, renters without authority and addresses outside your territory are credited back. Flag it from the lead notification and we review it within one business day."),
-        ("Do I have to sign a long contract?", "No. Plans are month to month. We ask for a short ramp-up window so campaigns can learn your market, then you can pause or cancel any time."),
+        ("Do I have to sign a long contract?", "No. Plans are month to month. We ask for a short ramp-up period while campaigns settle in your market. After that you can pause or cancel any time."),
         ("How quickly can I start?", "Most territories go live in about a week: a short onboarding call, ZIP and job-type setup, routing to your phone or CRM, then campaigns launch."),
     ]
     latest = "".join(post_card(p, cls=f"reveal d{n}") for n, p in enumerate(posts[:3]))
@@ -433,14 +448,16 @@ def build_home(posts):
 <section class="hero">
   <div class="wrap hero-inner">
     <div class="hero-copy reveal">
-      {eyebrow("01", "Drainage &amp; irrigation lead generation")}
+      {eyebrow("01", "Drainage &amp; irrigation leads")}
       <h1>More drainage jobs. <span class="accent">Less chasing leads.</span></h1>
-      <p class="lede">Exclusive, phone-verified homeowner leads for drainage and irrigation contractors. Every request goes to one company in the territory: yours.</p>
-      <div class="hero-ctas">
-        <a class="btn btn-primary btn-lg" href="/contact.html">Talk to Launch {icon("arrow")}</a>
-        <a class="btn btn-outline btn-lg" href="/how-it-works.html">How it works</a>
-      </div>
-      <p class="hero-note">{icon("lock")}One contractor per lead. Never shared, never resold.</p>
+      <p class="lede">We run local ads for homeowners who need drainage or irrigation work, verify each request by phone, and send it to one contractor in the area. You pay per lead, month to month.</p>
+      <form class="hero-form" action="/contact.html" method="get">
+        <label class="sr-only" for="h-zip">Your main ZIP code</label>
+        <input id="h-zip" name="zip" inputmode="numeric" maxlength="5" pattern="[0-9]{{5}}" placeholder="Your ZIP code" autocomplete="postal-code" required>
+        <button class="btn btn-primary btn-lg" type="submit">Check my area {icon("arrow")}</button>
+      </form>
+      <ul class="hero-trust"><li>{icon("check")}No setup fee</li><li>{icon("check")}Month to month</li><li>{icon("check")}Bad leads credited</li></ul>
+      <p class="hero-note">{icon("phone")}Prefer to talk? Call <a href="{PHONE_HREF}">{PHONE}</a></p>
     </div>
   </div>
   <div class="hero-media">
@@ -454,22 +471,22 @@ def build_home(posts):
 </section>
 
 <div class="proof"><div class="wrap"><div class="proof-card reveal">
-  <div class="proof-item">{icon("phone")}<div><strong>More calls</strong><span>Homeowners ready to book an estimate</span></div></div>
-  <div class="proof-item">{icon("users")}<div><strong>Better quality leads</strong><span>Verified, in-area, owner-occupied</span></div></div>
-  <div class="proof-item">{icon("bars")}<div><strong>A steadier pipeline</strong><span>Drainage and irrigation cover each season</span></div></div>
-  <div class="proof-item">{icon("lock")}<div><strong>Exclusive to you</strong><span>One contractor per lead</span></div></div>
+  <div class="proof-item">{icon("lock")}<div><strong>Exclusive</strong><span>One contractor per lead, never resold</span></div></div>
+  <div class="proof-item">{icon("phone")}<div><strong>Phone-verified</strong><span>Checked before it reaches you</span></div></div>
+  <div class="proof-item">{icon("map")}<div><strong>Your ZIP codes</strong><span>You choose the area and job types</span></div></div>
+  <div class="proof-item">{icon("calendar")}<div><strong>Month to month</strong><span>No setup fee, pause any time</span></div></div>
 </div></div></div>
 
 <section class="section"><div class="wrap">
   <div class="section-head reveal">{eyebrow("02", "What we do")}
-    <h2>Two specialties. <span class="accent">Nothing else.</span></h2>
-    <p>General lead marketplaces sell roofers, plumbers and painters from the same funnel. Our ads, landing pages and screening questions are built for one thing: homeowners with water problems.</p></div>
+    <h2>Drainage and irrigation <span class="accent">leads only.</span></h2>
+    <p>We don't sell roofing, plumbing or painting leads. Our ads, landing pages and screening questions are written for homeowners with drainage and irrigation problems, so each request arrives with the details you need to quote.</p></div>
   <div class="grid-2">
     <article class="vertical drain reveal">
       {lines()}
       <span class="tag navy" style="align-self:flex-start;background:rgba(255,255,255,.1);margin-bottom:20px">{icon("drop")} Drainage</span>
       <h3>Drainage leads</h3>
-      <p>Standing water, eroding beds, wet basements and foundation worries. High-ticket, urgent, and usually ready to book after the next storm.</p>
+      <p>Homeowners with standing water, erosion or a wet basement. These are larger jobs, and demand rises after heavy rain.</p>
       <ul>{"".join(f"<li>{icon('check')}{j}</li>" for j in ["French drains", "Regrading", "Downspouts", "Sump pumps", "Dry wells", "Channel drains"])}</ul>
       <div class="foot"><div><small>Typical job size*</small><strong>$2.5k – $12k+</strong></div><a class="btn btn-white" href="/drainage-leads.html">Drainage leads {icon("arrow")}</a></div>
     </article>
@@ -477,7 +494,7 @@ def build_home(posts):
       {lines()}
       <span class="tag" style="align-self:flex-start;background:rgba(255,255,255,.16);color:#fff;margin-bottom:20px">{icon("sprinkler")} Irrigation</span>
       <h3>Irrigation leads</h3>
-      <p>New installs, repairs and water-saving upgrades, plus the seasonal service work that turns one customer into years of start-ups and winterizations.</p>
+      <p>New systems, repairs and water-saving upgrades, plus start-ups and winterizations that bring the same customer back every year.</p>
       <ul>{"".join(f"<li>{icon('check')}{j}</li>" for j in ["Sprinkler installs", "Repairs", "Drip systems", "Smart controllers", "Backflow", "Winterization"])}</ul>
       <div class="foot"><div><small>Typical job size*</small><strong>$250 – $8k+</strong></div><a class="btn btn-white" href="/irrigation-leads.html">Irrigation leads {icon("arrow")}</a></div>
     </article>
@@ -487,18 +504,18 @@ def build_home(posts):
 
 <section class="section section-ice"><div class="wrap">
   <div class="section-head reveal">{eyebrow("03", "Why Launch")}
-    <h2>Stop paying for a seat <span class="accent">in a bidding war.</span></h2>
-    <p>When the same homeowner gets four calls in ten minutes, the cheapest bid wins and everyone else paid for nothing. Exclusive leads change the math.</p></div>
+    <h2>Why contractors switch <span class="accent">from shared leads.</span></h2>
+    <p>On shared-lead marketplaces the same request often goes to several companies at once, and the lowest bid tends to win. Our leads go to one contractor, so you compete on your quote and your service.</p></div>
   {compare_table()}
-  <p style="margin-top:22px"><a class="link-arrow" href="/blog/exclusive-vs-shared-leads.html">Exclusive vs. shared leads: the real math {icon("arrow")}</a></p>
+  <p style="margin-top:22px"><a class="link-arrow" href="/blog/exclusive-vs-shared-leads.html">Compare cost per job: exclusive vs. shared leads {icon("arrow")}</a></p>
 </div></section>
 
 <section class="section section-navy on-navy"><div class="wrap">
   <div class="head-row">
     <div class="section-head reveal">{eyebrow("04", "How it works")}
-      <h2>From soggy yard to <span class="accent">booked estimate.</span></h2>
-      <p>You run the crews. We handle the ads, the landing pages, the screening and the delivery.</p></div>
-    <a class="btn btn-outline reveal" href="/how-it-works.html">The full process {icon("arrow")}</a>
+      <h2>Live in your area <span class="accent">in about a week.</span></h2>
+      <p>We handle the ads, landing pages, screening and delivery. You call the homeowner and quote the job.</p></div>
+    <a class="btn btn-outline reveal" href="/how-it-works.html">How it works {icon("arrow")}</a>
   </div>
   {steps_block()}
 </div></section>
@@ -506,31 +523,31 @@ def build_home(posts):
 <section class="section"><div class="wrap split">
   {sample_lead()}
   <div class="reveal d1">
-    {eyebrow("05", "Every lead")}
-    <h2>Everything you need <span class="accent">before you dial.</span></h2>
-    <p class="big">No more "someone wants a quote" with a dead number. Each lead arrives with what your estimator needs to qualify, price and book on the first call.</p>
+    {eyebrow("05", "What you receive")}
+    <h2>What's in <span class="accent">every lead.</span></h2>
+    <p class="big">Each lead includes the details your estimator needs to qualify the job and book a site visit on the first call.</p>
     <ul class="checklist">
-      <li>{icon("check")}<div><strong>The actual problem</strong><span>Pooling, wet basement, broken heads, new install. In the homeowner's words, with photos when they have them.</span></div></li>
-      <li>{icon("check")}<div><strong>Verified contact and ownership</strong><span>Phone confirmed. Renters and out-of-area requests filtered out.</span></div></li>
-      <li>{icon("check")}<div><strong>Timeline and scope</strong><span>How soon, rough size, and whether they've had other quotes.</span></div></li>
+      <li>{icon("check")}<div><strong>The problem</strong><span>Described by the homeowner, with photos when they have them.</span></div></li>
+      <li>{icon("check")}<div><strong>Verified phone and ownership</strong><span>Renters and out-of-area requests are filtered out.</span></div></li>
+      <li>{icon("check")}<div><strong>Timeline and size</strong><span>When they want the work done, the rough scope, and whether they have other quotes.</span></div></li>
     </ul>
-    <a class="link-arrow" href="/blog/qualify-drainage-leads.html">Read our first-call playbook {icon("arrow")}</a>
+    <a class="link-arrow" href="/blog/qualify-drainage-leads.html">How to qualify a drainage lead on the first call {icon("arrow")}</a>
   </div>
 </div></section>
 
 <section class="section section-ice"><div class="wrap">
-  <div class="section-head center reveal">{eyebrow("06", "Run the numbers")}
-    <h2>What's a lead worth <span class="accent">to your business?</span></h2>
-    <p>Move the sliders to match your shop. Lead spend in, closed jobs out.</p></div>
+  <div class="section-head center reveal">{eyebrow("06", "Estimate your return")}
+    <h2>What leads could be worth <span class="accent">to your business.</span></h2>
+    <p>Enter your close rate and average job value to see monthly lead spend, jobs closed and revenue.</p></div>
   {calculator()}
 </div></section>
 
 <section class="section"><div class="wrap split">
   <div class="reveal">
-    {eyebrow("07", "Year-round pipeline")}
-    <h2>Two seasons that <span class="accent">cover each other.</span></h2>
-    <p class="big">Drainage jumps with spring thaw and fall storms. Irrigation runs from start-ups through summer repairs. Run both and your crews stay booked when one side slows down.</p>
-    <a class="link-arrow" href="/blog/drainage-demand-calendar.html">The drainage demand calendar {icon("arrow")}</a>
+    {eyebrow("07", "Seasonality")}
+    <h2>Drainage and irrigation <span class="accent">peak at different times.</span></h2>
+    <p class="big">Drainage requests rise with spring thaw and fall storms. Irrigation is busiest from spring start-ups through summer repairs. Contractors who offer both keep crews busy for more of the year.</p>
+    <a class="link-arrow" href="/blog/drainage-demand-calendar.html">Month-by-month drainage demand {icon("arrow")}</a>
   </div>
   {season_chart("Illustrative shape only. Timing shifts with climate: earlier in the South, later in the North.")}
 </div></section>
@@ -539,16 +556,16 @@ def build_home(posts):
 
 <section class="section section-ice"><div class="wrap">
   <div class="head-row">
-    <div class="section-head reveal">{eyebrow("08", "Contractor playbook")}
-      <h2>Grow beyond <span class="accent">the lead.</span></h2>
-      <p>Pricing, qualifying, seasonal planning and recurring revenue guides for drainage and irrigation owners.</p></div>
+    <div class="section-head reveal">{eyebrow("08", "Guides")}
+      <h2>Guides for drainage and <span class="accent">irrigation owners.</span></h2>
+      <p>Pricing, qualifying calls, seasonal planning and maintenance plans.</p></div>
     <a class="btn btn-outline reveal" href="/blog/">All articles {icon("arrow")}</a>
   </div>
   <div class="posts">{latest}</div>
 </div></section>
 
 <section class="section"><div class="wrap">
-  <div class="section-head center reveal">{eyebrow("09", "FAQ")}<h2>Straight answers.</h2></div>
+  <div class="section-head center reveal">{eyebrow("09", "FAQ")}<h2>Common questions</h2></div>
   {faq(home_faq)}
 </div></section>
 
@@ -557,51 +574,51 @@ def build_home(posts):
     schema = [{"@context": "https://schema.org", "@type": "Organization", "name": BRAND, "url": DOMAIN, "email": EMAIL,
                "logo": f"{DOMAIN}/assets/apple-touch-icon.png",
                "description": "Exclusive drainage and irrigation lead generation for contractors."}, faq_schema(home_faq)]
-    page("index.html", "Launch Lead Gen | More Drainage Jobs. Less Chasing Leads.",
-         "Exclusive, phone-verified drainage and irrigation leads for contractors. One contractor per lead, delivered to your phone in real time.",
+    page("index.html", "Exclusive Drainage & Irrigation Leads for Contractors | Launch Lead Gen",
+         "Exclusive, phone-verified drainage and irrigation leads in your ZIP codes. One contractor per lead, pay per lead, month to month.",
          body, "/", schema=schema)
 
 
 def service_page(kind, posts):
     if kind == "drainage":
         slug, title, ic = "drainage-leads.html", "Drainage Leads", "drop"
-        h1 = 'Drainage leads from homeowners <span class="accent">who need it fixed now.</span>'
-        lede = "French drains, regrading, downspouts, sump pumps and foundation drainage. Exclusive requests from homeowners in your ZIP codes, delivered the minute they ask."
+        h1 = 'Exclusive drainage leads <span class="accent">in your ZIP codes.</span>'
+        lede = "Requests for French drains, regrading, downspouts, sump pumps and dry wells from homeowners in your area. Each lead goes to you only and arrives within a minute."
         jobs = [
-            ("pipe", "French drain installation", "Backyard pooling, soggy lawns and runoff toward the house. Usually the highest-ticket request we send."),
+            ("pipe", "French drain installation", "Backyard pooling, wet lawns and runoff toward the house. Usually the largest drainage job we send."),
             ("wave", "Yard grading &amp; regrading", "Negative slope, low spots and erosion. Often bundled with drains or downspout work."),
-            ("drop", "Downspout &amp; gutter drainage", "Buried extensions, pop-up emitters and tie-ins. Quick wins that open the door to bigger jobs."),
-            ("pump", "Sump pumps &amp; basement drainage", "Wet basements, failed pumps and interior drains. Urgent, high-intent and storm-driven."),
-            ("layers", "Dry wells &amp; catch basins", "When water needs somewhere to go. Common in clay soils and tight lots."),
+            ("drop", "Downspout &amp; gutter drainage", "Buried extensions, pop-up emitters and tie-ins. Smaller jobs that often lead to larger ones."),
+            ("pump", "Sump pumps &amp; basement drainage", "Wet basements, failed pumps and interior drains. Usually urgent, especially after storms."),
+            ("layers", "Dry wells &amp; catch basins", "Common on clay soils and small lots where water has nowhere to drain."),
             ("grid", "Channel &amp; trench drains", "Driveways, patios and garage entries that flood every time it rains."),
         ]
         qa = [
             ("Do you send foundation repair or waterproofing leads?", "We focus on exterior and basement drainage. If a homeowner mentions structural cracks or major waterproofing, we flag it in the lead so you can decide whether to take it or refer it."),
-            ("Can I exclude certain job types?", "Yes. Many crews skip sump pumps or interior drains. Pick exactly the drainage jobs you want and we'll only target and send those."),
-            ("What happens after a big storm?", "Drainage requests usually spike after heavy rain. You set a weekly cap so you never get more than your crews can handle, and we can raise it temporarily if you want the surge."),
+            ("Can I exclude certain job types?", "Yes. Many crews skip sump pumps or interior drains. Choose the drainage jobs you want and we only advertise for and send those."),
+            ("What happens after a big storm?", "Drainage requests usually rise after heavy rain. Your weekly cap keeps volume at what your crews can handle, and we can raise it for a few weeks if you want more."),
             ("How do you verify drainage leads?", "Every phone number is verified, the address is checked against your territory, and the homeowner answers questions about the problem, the timeline and whether they own the home."),
         ]
-        season = "Drainage requests usually build with spring thaw and rain, ease in midsummer, then rise again with fall storms. Illustrative shape only."
+        season = "Drainage requests usually build with spring thaw and rain, ease in midsummer, then rise again with fall storms."
         cat = "Drainage"
     else:
         slug, title, ic = "irrigation-leads.html", "Irrigation Leads", "sprinkler"
-        h1 = 'Irrigation leads that turn into <span class="accent">ten-year customers.</span>'
-        lede = "New sprinkler systems, repairs, drip conversions and smart controllers, plus the seasonal service calls that build recurring revenue. Exclusive to you, in your ZIP codes."
+        h1 = 'Exclusive irrigation leads <span class="accent">in your ZIP codes.</span>'
+        lede = "Requests for new sprinkler systems, repairs, drip conversions, smart controllers and seasonal service from homeowners in your area. Each lead goes to you only."
         jobs = [
-            ("sprinkler", "New sprinkler system installs", "New builds, sod installs and homeowners done dragging hoses. Your highest-value irrigation request."),
-            ("tool", "Sprinkler &amp; irrigation repair", "Broken heads, leaks, dead zones and low pressure. Fast to close and a great door into a service plan."),
+            ("sprinkler", "New sprinkler system installs", "New builds, new sod and homeowners replacing hoses. The largest irrigation job we send."),
+            ("tool", "Sprinkler &amp; irrigation repair", "Broken heads, leaks, dry zones and low pressure. Quick to close and a good way to sign up service-plan customers."),
             ("drop", "Drip irrigation &amp; conversions", "Beds, gardens and water-wise landscapes. Popular wherever watering limits apply."),
-            ("wifi", "Smart controller upgrades", "Weather-based controllers and Wi-Fi timers. Easy upsell, often rebate-eligible locally."),
+            ("wifi", "Smart controller upgrades", "Weather-based controllers and Wi-Fi timers. Many local utilities offer rebates."),
             ("shield", "Backflow testing &amp; repair", "Annual testing where required, plus device repairs. Recurring by nature."),
-            ("snow", "Spring start-ups &amp; winterization", "Seasonal service that fills the calendar and builds a route of repeat customers."),
+            ("snow", "Spring start-ups &amp; winterization", "Seasonal service calls that turn into repeat customers every year."),
         ]
         qa = [
             ("Do you send commercial irrigation leads?", "Our campaigns target homeowners. Occasionally a small commercial or HOA request comes through; we label it clearly and you can opt in or out."),
-            ("Can I get only repair leads, or only installs?", "Yes. Choose any mix: installs, repairs, seasonal service or all of it. Many companies start with repairs because they close fast and lead to service plans."),
+            ("Can I get only repair leads, or only installs?", "Yes. Choose installs, repairs, seasonal service or any combination. Many companies start with repairs because they close quickly and lead to service plans."),
             ("Will I get leads in winter?", "Irrigation slows in the off-season in colder climates. That's why many contractors pair irrigation with drainage, which picks up with fall and late-winter rain."),
             ("How do you verify irrigation leads?", "Every phone number is verified, the address is checked against your territory, and the homeowner tells us what they need, the system size and their timeline."),
         ]
-        season = "Irrigation requests usually jump with spring start-ups, stay strong through summer repairs, and finish with fall winterizations. Illustrative shape only."
+        season = "Irrigation requests usually rise with spring start-ups, stay steady through summer repairs, and finish with fall winterizations."
         cat = "Irrigation"
 
     cards = "".join(f'<article class="card reveal d{n % 3}"><div class="ic">{icon(i)}</div><h3>{t}</h3><p>{d}</p></article>'
@@ -619,10 +636,10 @@ def service_page(kind, posts):
       <h1>{h1}</h1>
       <p class="lede">{lede}</p>
       <div class="hero-ctas" style="margin-bottom:28px">
-        <a class="btn btn-primary btn-lg" href="/contact.html?service={kind}">Check my territory {icon("arrow")}</a>
+        <a class="btn btn-primary btn-lg" href="/contact.html?service={kind}">Check my area {icon("arrow")}</a>
         <a class="btn btn-outline btn-lg" href="/pricing.html">See pricing</a>
       </div>
-      <ul class="check-row"><li>{icon("check")}Exclusive</li><li>{icon("check")}Phone-verified</li><li>{icon("check")}Pick your job types</li></ul>
+      <ul class="check-row"><li>{icon("check")}Exclusive</li><li>{icon("check")}Phone-verified</li><li>{icon("check")}Month to month</li></ul>
     </div>
     <div class="reveal d2">{sample_lead(kind)}</div>
   </div>
@@ -630,20 +647,20 @@ def service_page(kind, posts):
 
 <section class="section" id="jobs"><div class="wrap">
   <div class="section-head reveal">{eyebrow("01", "Job types")}
-    <h2>Choose the {kind} jobs <span class="accent">you actually want.</span></h2>
-    <p>Turn each job type on or off. We only target, screen and send work that fits your crews and equipment.</p></div>
+    <h2>Choose the {kind} jobs <span class="accent">you want.</span></h2>
+    <p>Turn each job type on or off. We only advertise for, screen and send the work that fits your crews and equipment.</p></div>
   <div class="grid-3">{cards}</div>
 </div></section>
 
 <section class="section section-ice"><div class="wrap split">
   <div class="reveal">
-    {eyebrow("02", "What qualifies")}
-    <h2>Real homeowners. <span class="accent">Real projects.</span></h2>
+    {eyebrow("02", "Lead quality")}
+    <h2>What every lead <span class="accent">has to pass.</span></h2>
     <ul class="checklist">
       <li>{icon("check")}<div><strong>Inside your territory</strong><span>Address checked against the ZIP codes you chose.</span></div></li>
       <li>{icon("check")}<div><strong>Verified phone number</strong><span>No fake numbers, no bots, no test submissions.</span></div></li>
       <li>{icon("check")}<div><strong>Owner or decision-maker</strong><span>Renters without authority are filtered out.</span></div></li>
-      <li>{icon("check")}<div><strong>A specific job and timeline</strong><span>Not just browsing. They told us what's wrong and when they want it fixed.</span></div></li>
+      <li>{icon("check")}<div><strong>A specific job and timeline</strong><span>The homeowner has described the problem and when they want it fixed.</span></div></li>
     </ul>
   </div>
   <div class="card reveal d1" style="padding:36px">
@@ -656,24 +673,24 @@ def service_page(kind, posts):
 <section class="section"><div class="wrap split">
   <div class="reveal">
     {eyebrow("03", "Seasonality")}
-    <h2>Plan your crews <span class="accent">around demand.</span></h2>
+    <h2>When {kind} <span class="accent">demand peaks.</span></h2>
     <p class="big">{season}</p>
   </div>
   {season_chart("Relative demand by month.")}
 </div></section>
 
 <section class="section section-ice"><div class="wrap">
-  <div class="section-head center reveal">{eyebrow("04", "Run the numbers")}<h2>What could {kind} leads <span class="accent">be worth to you?</span></h2></div>
+  <div class="section-head center reveal">{eyebrow("04", "Estimate your return")}<h2>What {kind} leads could <span class="accent">be worth to you.</span></h2></div>
   {calculator(kind)}
 </div></section>
 
 <section class="section"><div class="wrap">
-  <div class="section-head reveal">{eyebrow("05", "From the playbook")}<h2>Win more {kind} jobs.</h2></div>
+  <div class="section-head reveal">{eyebrow("05", "Guides")}<h2>Guides for {kind} contractors</h2></div>
   <div class="posts">{rel}</div>
 </div></section>
 
 <section class="section section-ice"><div class="wrap">
-  <div class="section-head center reveal">{eyebrow("06", "FAQ")}<h2>{title}: straight answers</h2></div>
+  <div class="section-head center reveal">{eyebrow("06", "FAQ")}<h2>{title}: common questions</h2></div>
   {faq(qa)}
   <p style="text-align:center;margin-top:32px">Also run {other[0]}? <a class="link-arrow" href="{other[1]}">See {other[2]} {icon("arrow")}</a></p>
 </div></section>
@@ -690,16 +707,16 @@ def build_how():
         ("shield", "Phone verification", "Every number is checked before the lead is sent. Disconnected and fake numbers never reach you."),
         ("map", "Territory matching", "Addresses are matched to your ZIP codes. Out-of-area requests are dropped, not dumped on you."),
         ("home", "Ownership screening", "We ask whether they own the home or can approve the work."),
-        ("target", "Intent questions", "Problem, scope, timeline and photos, so you can tell a $300 repair from a $9,000 drain job before you call."),
-        ("lock", "One contractor only", "No reselling, no splitting, no auction. The lead is yours."),
+        ("target", "Job details", "Problem, scope, timeline and photos, so you know whether it's a small repair or a full drain system before you call."),
+        ("lock", "One contractor only", "We never resell or split a lead."),
         ("refresh", "Credits for bad leads", "Wrong numbers, duplicates, renters and out-of-area addresses are credited after review."),
     ]
     qcards = "".join(f'<article class="card reveal d{n % 3}"><div class="ic">{icon(i)}</div><h3>{t}</h3><p>{d}</p></article>' for n, (i, t, d) in enumerate(quality))
     onboarding = [
         ("Day 1", "Strategy call", "We map your ZIP codes, job types, crew capacity, average ticket and the jobs you don't want."),
-        ("Days 2–4", "Build &amp; routing", "Landing pages, campaigns and screening questions go up. Leads get routed to your phone, inbox and CRM."),
+        ("Days 2–4", "Setup", "We build your landing pages, campaigns and screening questions, and route leads to your phone, inbox and CRM."),
         ("Days 5–7", "Go live", "Campaigns launch with a weekly lead cap you control."),
-        ("Ongoing", "Tune &amp; scale", "Tell us which leads closed. We shift budget toward the ZIPs and job types that make you the most money."),
+        ("Ongoing", "Adjust", "Tell us which leads closed. We move budget toward the ZIP codes and job types that pay best."),
     ]
     tl = "".join(f'<div class="card reveal d{n}"><span class="num">{d.upper()}</span><h3>{t}</h3><p>{x}</p></div>' for n, (d, t, x) in enumerate(onboarding))
     body = f"""
@@ -708,8 +725,8 @@ def build_how():
   <div class="wrap reveal">
     <div class="crumbs"><a href="/">Home</a> / How it works</div>
     {eyebrow("→", "How it works")}
-    <h1>We find the homeowners. <span class="accent">You win the jobs.</span></h1>
-    <p class="lede">A done-for-you lead engine for drainage and irrigation contractors: local campaigns, landing pages, screening and instant delivery, all built around your territory.</p>
+    <h1>How Launch Lead Gen <span class="accent">works.</span></h1>
+    <p class="lede">We run local ad campaigns for your service area, screen every homeowner request, and send the ones that qualify to you within a minute.</p>
     <a class="btn btn-primary btn-lg" href="/contact.html">Talk to Launch {icon("arrow")}</a>
   </div>
 </section>
@@ -718,8 +735,8 @@ def build_how():
 
 <section class="section" id="quality"><div class="wrap">
   <div class="section-head reveal">{eyebrow("01", "Lead quality")}
-    <h2>Six filters before a lead <span class="accent">ever reaches you.</span></h2>
-    <p>Cheap leads get expensive when half of them are junk. Here's what every request has to pass.</p></div>
+    <h2>Six checks on <span class="accent">every lead.</span></h2>
+    <p>A request has to pass all six before we send it to you.</p></div>
   <div class="grid-3">{qcards}</div>
 </div></section>
 
@@ -731,8 +748,8 @@ def build_how():
 <section class="section"><div class="wrap split">
   <div class="reveal">
     {eyebrow("03", "Delivery")}
-    <h2>Leads go where <span class="accent">you already work.</span></h2>
-    <p class="big">Speed wins jobs. Every lead is pushed instantly so whoever's on call can dial first.</p>
+    <h2>Delivered to <span class="accent">your phone and CRM.</span></h2>
+    <p class="big">Leads are sent the moment they pass screening, so whoever is on call can phone the homeowner right away.</p>
     <ul class="checklist">
       <li>{icon("phone")}<div><strong>Text alerts</strong><span>To one phone or a rotation across your sales team.</span></div></li>
       <li>{icon("mail")}<div><strong>Email with full details</strong><span>Easy to forward to an estimator or office manager.</span></div></li>
@@ -745,7 +762,7 @@ def build_how():
 
 <section class="section" style="padding-top:0"><div class="wrap">{banner()}</div></section>
 
-{cta_band('Ready to own <span class="accent">your market?</span>', "Tell us your ZIP codes and the jobs you want. We'll confirm availability and walk you through a launch plan.")}
+{cta_band()}
 """
     page("how-it-works.html", f"How It Works | {BRAND}",
          "How Launch Lead Gen finds, verifies and delivers exclusive drainage and irrigation leads to contractors. Live in about a week.",
@@ -773,7 +790,7 @@ def build_pricing():
     <a class="btn btn-primary btn-block" href="/contact.html?plan=growth">Choose Growth {icon("arrow")}</a>
   </article>
   <article class="plan reveal d2">
-    <h3>Territory Lock</h3><p>Own your market. We stop selling your ZIPs to anyone else.</p>
+    <h3>Territory Lock</h3><p>Exclusive rights to your ZIP codes. No other contractor can buy leads there.</p>
     <div class="price">Custom</div>
     <p class="price-note">Monthly territory fee + reduced per-lead rate</p>
     <ul>{li(["Exclusive ZIP code lockout", "All 14 job types available", "Dedicated campaign manager", "Landing pages with your brand", "Quarterly expansion plan"])}</ul>
@@ -792,8 +809,8 @@ def build_pricing():
   {lines()}
   <div class="wrap reveal" style="text-align:center">
     {eyebrow("→", "Pricing")}
-    <h1 style="margin-inline:auto">Pay for leads. <span class="accent">Not promises.</span></h1>
-    <p class="lede" style="margin-inline:auto">Simple per-lead pricing, no setup fees, month to month. Your exact rate depends on your market and job mix.</p>
+    <h1 style="margin-inline:auto">Simple <span class="accent">per-lead pricing.</span></h1>
+    <p class="lede" style="margin-inline:auto">No setup fee and no long-term contract. Your exact rate depends on your market and the jobs you choose.</p>
   </div>
 </section>
 <section class="section section-ice"><div class="wrap">
@@ -806,7 +823,7 @@ def build_pricing():
 </div></section>
 
 <section class="section"><div class="wrap">
-  <div class="section-head center reveal">{eyebrow("01", "Run the numbers")}<h2>What's a closed job <span class="accent">worth to you?</span></h2></div>
+  <div class="section-head center reveal">{eyebrow("01", "Estimate your return")}<h2>See what your numbers <span class="accent">look like.</span></h2></div>
   {calculator()}
 </div></section>
 
@@ -831,17 +848,17 @@ def build_contact():
     <div class="reveal">
       <div class="crumbs"><a href="/">Home</a> / Talk to Launch</div>
       {eyebrow("→", "Talk to Launch")}
-      <h1>Let's see if your market <span class="accent">is still open.</span></h1>
-      <p class="lede">We limit how many contractors we work with in each area. Tell us where you work and what jobs you want. We'll confirm availability and send a launch plan within one business day.</p>
+      <h1>Check if your area <span class="accent">is open.</span></h1>
+      <p class="lede">We work with a limited number of contractors in each market. Tell us where you work and which jobs you want, and we'll reply within one business day with availability and pricing.</p>
       <ul class="checklist">
         <li>{icon("check")}<div><strong>Territory check</strong><span>We confirm which of your ZIP codes are open.</span></div></li>
         <li>{icon("check")}<div><strong>Lead estimate</strong><span>Expected volume and per-lead pricing for your area.</span></div></li>
-        <li>{icon("check")}<div><strong>No pressure</strong><span>A 20-minute call. If it's not a fit, we'll tell you.</span></div></li>
+        <li>{icon("check")}<div><strong>A short call</strong><span>About 20 minutes. If we're not a fit for your area, we'll say so.</span></div></li>
       </ul>
-      <p>Prefer email? <a style="color:#fff" href="mailto:{EMAIL}">{EMAIL}</a></p>
+      <p>Prefer to talk? Call <a style="color:#fff;font-weight:700" href="{PHONE_HREF}">{PHONE}</a> or email <a style="color:#fff" href="mailto:{EMAIL}">{EMAIL}</a>.</p>
     </div>
-    <form class="form-card reveal d1" id="territory" data-contact data-endpoint="" novalidate>
-      <h2>Check my territory</h2>
+    <form class="form-card reveal d1" id="territory" data-contact data-endpoint="/api/inquiry" novalidate>
+      <h2>Check my area</h2>
       <div class="field-row">
         <div class="field"><label for="f-name">Your name</label><input id="f-name" name="name" autocomplete="name"><span class="err"></span></div>
         <div class="field"><label for="f-company">Company</label><input id="f-company" name="company" autocomplete="organization"><span class="err"></span></div>
@@ -859,9 +876,11 @@ def build_contact():
         <div class="field"><label for="f-vol">Leads per month</label><select id="f-vol" name="volume"><option>10–20</option><option>20–40</option><option>40–60</option><option>60+</option></select></div>
       </div>
       <div class="field"><label for="f-msg">Anything else? <span style="font-weight:500;color:var(--muted)">(optional)</span></label><textarea id="f-msg" name="message" placeholder="Crew size, jobs you don't want, current lead sources…"></textarea></div>
-      <button class="btn btn-primary btn-lg btn-block" type="submit">Talk to Launch {icon("arrow")}</button>
+      <div class="hp" aria-hidden="true"><label for="f-website">Website</label><input id="f-website" name="website" tabindex="-1" autocomplete="off"></div>
+      <label class="check-consent"><input type="checkbox" name="smsConsent"><span>I consent to receive SMS notifications, alerts and occasional marketing messages from {BRAND}. Message frequency varies. Message and data rates may apply. Reply STOP to unsubscribe at any time. (Optional)</span></label>
+      <button class="btn btn-primary btn-lg btn-block" type="submit">Check my area {icon("arrow")}</button>
       <div class="form-status" role="status" aria-live="polite"></div>
-      <p class="consent">By submitting, you agree that {BRAND} may contact you by phone, text or email about this request. Message and data rates may apply. Consent isn't a condition of purchase. See our <a href="/privacy.html">Privacy Policy</a>.</p>
+      <p class="consent">We'll use your details to reply to this request. See our <a href="/privacy.html">Privacy Policy</a>.</p>
     </form>
   </div>
 </section>
@@ -880,9 +899,9 @@ def build_blog(posts):
 <section class="page-hero on-navy">
   {lines()}
   <div class="wrap reveal">
-    {eyebrow("→", "The contractor playbook")}
-    <h1>Build a drainage business <span class="accent">that books itself.</span></h1>
-    <p class="lede">Pricing, sales scripts, seasonal planning and recurring-revenue guides for owners and estimators. Straight from the field, no fluff.</p>
+    {eyebrow("→", "Guides")}
+    <h1>Guides for drainage and <span class="accent">irrigation contractors.</span></h1>
+    <p class="lede">Pricing, phone scripts, seasonal planning and maintenance plans for owners and estimators.</p>
   </div>
 </section>
 <section class="section"><div class="wrap">
@@ -890,9 +909,9 @@ def build_blog(posts):
   {feature}
   <div class="posts">{rest}</div>
 </div></section>
-{cta_band('Turn these playbooks <span class="accent">into booked jobs.</span>', "Great follow-up needs great leads. See whether exclusive drainage and irrigation leads are open in your area.")}
+{cta_band()}
 """
-    page("blog/index.html", f"Contractor Playbook: Drainage & Irrigation Growth Guides | {BRAND}",
+    page("blog/index.html", f"Guides for Drainage & Irrigation Contractors | {BRAND}",
          "Practical guides for drainage and irrigation contractors: pricing French drains, qualifying leads, seasonal planning, maintenance plans and lead strategy.",
          body, "/blog/")
 
@@ -913,13 +932,13 @@ def build_blog(posts):
         schema = {"@context": "https://schema.org", "@type": "BlogPosting", "headline": p["title"], "description": p["description"],
                   "datePublished": p["date"], "author": {"@type": "Organization", "name": BRAND},
                   "publisher": {"@type": "Organization", "name": BRAND}, "image": OG_IMAGE,
-                  "mainEntityOfPage": f"{DOMAIN}/blog/{p['slug']}.html"}
+                  "mainEntityOfPage": f"{DOMAIN}/blog/{p['slug']}"}
         body = f"""
 <div class="progress" aria-hidden="true"></div>
 <section class="page-hero article-hero on-navy">
   {lines()}
   <div class="wrap">
-    <div class="crumbs"><a href="/">Home</a> / <a href="/blog/">Playbook</a> / {esc(p['category'])}</div>
+    <div class="crumbs"><a href="/">Home</a> / <a href="/blog/">Guides</a> / {esc(p['category'])}</div>
     <h1>{esc(p['title'])}</h1>
     <p class="dek">{esc(p['excerpt'])}</p>
     <div class="article-meta"><span class="tag navy" style="background:var(--blue)">{esc(p['category'])}</span><span>{nice_date(p['date'])}</span><span>·</span><span>{esc(p['readTime'])}</span><span>·</span><span>By the {BRAND} team</span></div>
@@ -929,11 +948,11 @@ def build_blog(posts):
   <article class="prose">{body_html}</article>
   <aside class="aside-sticky">
     <nav class="toc" aria-label="On this page"><h4>On this page</h4><ol>{toc_html}</ol></nav>
-    <div class="aside-cta on-navy"><h4>Want leads like these?</h4><p>Exclusive, verified {svc} leads in your ZIP codes. One contractor per lead.</p><a class="btn btn-primary btn-block" href="/contact.html?service={svc}">Talk to Launch {icon("arrow")}</a></div>
+    <div class="aside-cta on-navy"><h4>Get {svc} leads in your area</h4><p>Exclusive, phone-verified, one contractor per lead.</p><a class="btn btn-primary btn-block" href="/contact.html?service={svc}">Talk to Launch {icon("arrow")}</a></div>
   </aside>
 </div></section>
 <section class="section section-ice"><div class="wrap">
-  <div class="section-head">{eyebrow("→", "Keep reading")}<h2>More from the playbook</h2></div>
+  <div class="section-head">{eyebrow("→", "Guides")}<h2>More guides</h2></div>
   <div class="posts">{rel}</div>
 </div></section>
 """
@@ -950,7 +969,7 @@ def legal_page(path, title, updated, sections):
 
 
 def build_legal():
-    updated = date.today().strftime("%B %-d, %Y")
+    updated = LEGAL_UPDATED
     legal_page("privacy.html", "Privacy Policy", updated, [
         ("What we collect", f"<p>When you use the forms on this site we collect what you enter: your name, company, email, phone number, the ZIP codes you serve, the lead types and plan you're interested in, and any message. Like most websites, our hosting provider may log basic technical data such as your IP address and browser type.</p>"),
         ("How we use it", "<p>We use your details to respond to your request, check territory availability, prepare a quote and, if you become a client, deliver and support the service. We may contact you by phone, text or email about your request. You can opt out of texts by replying STOP, and out of emails using the link in any message.</p>"),
@@ -971,9 +990,9 @@ def build_legal():
 
 def build_404():
     body = f"""<section class="page-hero on-navy" style="min-height:62vh;display:grid;align-items:center">{lines()}
-<div class="wrap">{eyebrow("404", "Page not found")}<h1>This page <span class="accent">drained away.</span></h1>
-<p class="lede">The page you're looking for doesn't exist. Try one of these instead.</p>
-<div class="hero-ctas"><a class="btn btn-primary" href="/">Home {icon("arrow")}</a><a class="btn btn-outline" href="/blog/">Playbook</a></div></div></section>"""
+<div class="wrap">{eyebrow("404", "Page not found")}<h1>Page not found</h1>
+<p class="lede">This page doesn't exist or has moved.</p>
+<div class="hero-ctas"><a class="btn btn-primary" href="/">Home {icon("arrow")}</a><a class="btn btn-outline" href="/blog/">Guides</a></div></div></section>"""
     page("404.html", f"Page not found | {BRAND}", "Page not found.", body, noindex=True)
 
 
@@ -988,6 +1007,7 @@ def main():
         shutil.rmtree(OUT)
     shutil.copytree(SRC / "assets", OUT / "assets")
     write_favicon()
+    shutil.copy(SRC / "headers.txt", OUT / "_headers")
     posts = load_posts()
     build_home(posts)
     service_page("drainage", posts)
@@ -998,9 +1018,7 @@ def main():
     build_blog(posts)
     build_legal()
     build_404()
-    urls = "".join(
-        f"<url><loc>{DOMAIN}/{'' if p == 'index.html' else p.replace('index.html', '')}</loc></url>"
-        for p, noindex in PAGES if not noindex)
+    urls = "".join(f"<url><loc>{DOMAIN}{clean_url(p)}</loc></url>" for p, noindex in PAGES if not noindex)
     (OUT / "sitemap.xml").write_text(f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n')
     (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {DOMAIN}/sitemap.xml\n")
     print(f"Built {len(PAGES)} pages into {OUT}")

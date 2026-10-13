@@ -115,7 +115,7 @@
       out.appendChild(strong);
       out.appendChild(document.createTextNode("tell us a bit more and we'll confirm whether " + svc.options[svc.selectedIndex].text.toLowerCase() + " leads are open in " + zip.value.trim() + ". "));
       var a = document.createElement("a");
-      a.href = "/contact.html?zip=" + encodeURIComponent(zip.value.trim()) + "&service=" + encodeURIComponent(svc.value);
+      a.href = "/contact?zip=" + encodeURIComponent(zip.value.trim()) + "&service=" + encodeURIComponent(svc.value);
       a.textContent = "Finish my territory request →";
       out.appendChild(a);
       out.classList.add("show");
@@ -139,7 +139,7 @@
       company: function (v) { return v.trim().length > 1 || "Add your company name."; },
       email: function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) || "Enter a valid email."; },
       phone: function (v) { return v.replace(/\D/g, "").length >= 10 || "Enter a 10-digit phone number."; },
-      zips: function (v) { return /\d{5}/.test(v) || "Add at least one ZIP code you serve."; }
+      zips: function (v) { return /^\d{5}(?:[\s,]+\d{5})*$/.test(v.trim()) || "Enter 5-digit ZIP codes separated by commas."; }
     };
     var check = function (name) {
       var el = contact.querySelector("[name=" + name + "]");
@@ -166,23 +166,30 @@
         return;
       }
       var endpoint = contact.getAttribute("data-endpoint");
-      if (!endpoint) {
-        status.className = "form-status show warn";
-        status.textContent = "Your details look good. Heads up: this form isn't connected to an inbox yet, so nothing was sent. Email us directly while we finish setup.";
-        return;
-      }
+      var fallback = "We couldn't send your request. Please call (210) 441-6650 or email info@launchleadgen.com.";
+      var val = function (n) { return contact.querySelector("[name=" + n + "]").value.trim(); };
+      var payload = {
+        name: val("name"), company: val("company"), email: val("email"), phone: val("phone"), zips: val("zips"),
+        message: [val("message"), "Plan: " + (val("plan") || "Not sure"), "Leads per month: " + val("volume")].filter(Boolean).join("\n"),
+        services: Array.prototype.map.call(contact.querySelectorAll("[name=services]:checked"), function (c) { return c.value; }),
+        smsConsent: contact.querySelector("[name=smsConsent]").checked,
+        website: val("website")
+      };
       var btn = contact.querySelector("button[type=submit]");
       btn.disabled = true;
-      fetch(endpoint, { method: "POST", body: new FormData(contact), headers: { Accept: "application/json" } })
+      status.className = "form-status";
+      fetch(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
         .then(function (r) {
-          if (!r.ok) throw new Error(r.status);
-          status.className = "form-status show ok";
-          status.textContent = "Got it. We'll check your territory and reach out within one business day.";
-          contact.reset();
+          return r.json().catch(function () { return {}; }).then(function (data) {
+            if (!r.ok || !data.success) throw new Error(data.error || fallback);
+            status.className = "form-status show ok";
+            status.textContent = data.message || "Thanks. We'll be in touch within one business day.";
+            contact.reset();
+          });
         })
-        .catch(function () {
+        .catch(function (err) {
           status.className = "form-status show warn";
-          status.textContent = "Something went wrong sending your request. Please try again or email us directly.";
+          status.textContent = err && err.message && err.message !== "Failed to fetch" ? err.message : fallback;
         })
         .then(function () { btn.disabled = false; });
     });
