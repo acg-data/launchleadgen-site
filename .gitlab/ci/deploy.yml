@@ -1,6 +1,6 @@
 deploy:deploy:
   stage: checks
-  image: node:22-bookworm
+  image: python:3.12-bookworm
   rules:
   - if: $CI_PIPELINE_SOURCE == "web" && $RECOVERED_WORKFLOW == "deploy"
     when: manual
@@ -22,14 +22,16 @@ deploy:deploy:
     GIT_DEPTH: '0'
   resource_group: deploy-$CI_COMMIT_REF_SLUG
   before_script:
-  - apt-get update -qq && apt-get install -y -qq python3 python3-venv
+  - curl -fsSL https://nodejs.org/dist/v24.12.0/node-v24.12.0-linux-x64.tar.xz -o /tmp/node.tar.xz
+  - echo 'bdebee276e58d0ef5448f3d5ac12c67daa963dd5e0a9bb621a53d1cefbc852fd  /tmp/node.tar.xz' | sha256sum -c -
+  - tar -xJf /tmp/node.tar.xz --strip-components=1 -C /usr/local
   - python3 -m venv /tmp/ci-python && export PATH="/tmp/ci-python/bin:$PATH"
   needs:
   - job: deploy:checks
     artifacts: false
 deploy:checks:
   stage: checks
-  image: node:22-bookworm
+  image: python:3.12-bookworm
   rules:
   - if: $CI_PIPELINE_SOURCE == "web" && $RECOVERED_WORKFLOW == "auto"
   - if: $CI_PIPELINE_SOURCE == "web" && $RECOVERED_WORKFLOW == "deploy"
@@ -48,5 +50,7 @@ deploy:checks:
     GIT_DEPTH: '0'
   resource_group: deploy-checks-$CI_COMMIT_REF_SLUG
   before_script:
-  - apt-get update -qq && apt-get install -y -qq python3 python3-venv
+  - curl -fsSL https://nodejs.org/dist/v24.12.0/node-v24.12.0-linux-x64.tar.xz -o /tmp/node.tar.xz
+  - echo 'bdebee276e58d0ef5448f3d5ac12c67daa963dd5e0a9bb621a53d1cefbc852fd  /tmp/node.tar.xz' | sha256sum -c -
+  - tar -xJf /tmp/node.tar.xz --strip-components=1 -C /usr/local
   - python3 -m venv /tmp/ci-python && export PATH="/tmp/ci-python/bin:$PATH"
