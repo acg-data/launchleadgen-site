@@ -20,3 +20,4 @@ variables:
   RECOVERED_WORKFLOW: $[[ inputs.workflow ]]
 include:
 - local: .gitlab/ci/deploy.yml
+- local: .gitlab/ci/cloudflare-access.yml
