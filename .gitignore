@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 .wrangler/
 node_modules/
+
+# GitLab CI runtime reports and temporary credentials
+.ci-results/

@@ -1,0 +1,25 @@
+name: Cloudflare deployment access
+
+on:
+  push:
+    paths:
+      - ".github/workflows/cloudflare-access.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || 'b750824d7f77ea68f5630ba69e740894' }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify access without deploying
+        run: node .gitlab/scripts/verify-cloudflare-access.mjs
+

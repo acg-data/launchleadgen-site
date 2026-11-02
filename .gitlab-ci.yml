@@ -1,0 +1,23 @@
+spec:
+  inputs:
+    workflow:
+      type: string
+      default: auto
+      options:
+      - auto
+      - deploy
+      description: auto runs the normal push/MR checks; choose a recovered workflow for a manual run or schedule.
+---
+workflow:
+  rules:
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  - if: $CI_PIPELINE_SOURCE == "push" && $CI_OPEN_MERGE_REQUESTS
+    when: never
+  - if: $CI_COMMIT_BRANCH || $CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "schedule"
+stages:
+- checks
+variables:
+  RECOVERED_WORKFLOW: $[[ inputs.workflow ]]
+include:
+- local: .gitlab/ci/deploy.yml
+- local: .gitlab/ci/cloudflare-access.yml
